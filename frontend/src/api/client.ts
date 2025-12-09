@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-// 开发环境：通过 Vite proxy 转发
-// 生产环境：通过 nginx proxy 转发
-const API_BASE_URL = '';
+// 从环境变量读取 API 地址
+// 开发环境：留空则通过 Vite proxy 转发
+// 生产环境：设置 VITE_API_BASE_URL 直连后端（如 https://api.example.com）
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // 创建 axios 实例
 export const apiClient = axios.create({
@@ -54,15 +55,16 @@ apiClient.interceptors.response.use(
 );
 
 // 图片URL处理工具
-// 使用相对路径，通过代理转发到后端
+// 根据配置使用相对路径或后端完整地址
 export const getImageUrl = (path?: string, timestamp?: string | number): string => {
   if (!path) return '';
   // 如果已经是完整URL，直接返回
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  // 使用相对路径（确保以 / 开头）
-  let url = path.startsWith('/') ? path : '/' + path;
+  // 拼接后端地址（如果配置了 VITE_API_BASE_URL）
+  const basePath = path.startsWith('/') ? path : '/' + path;
+  let url = API_BASE_URL ? `${API_BASE_URL}${basePath}` : basePath;
   
   // 添加时间戳参数避免浏览器缓存（仅在提供时间戳时添加）
   if (timestamp) {
